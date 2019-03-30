@@ -68,7 +68,7 @@
   import { processBestSentences, processSentiment } from './analytics';
 
   let transcripts = [[], []]
-  let sentiment = 0
+  let sentiment = 50
 
   const capitalize = word =>
     word && word.length ? word[0].toUpperCase() + word.slice(1) : ''
@@ -79,10 +79,6 @@
     const socket = new WebSocket(
       'wss://tgist-server-tawzkzwulm.now.sh/ws/speech/recv'
     )
-
-    setInterval(() => {
-      sentiment = Math.random() * 100
-    }, 2000)
 
     socket.onmessage = event => {
       const transcript = transcripts[transcripts.length - 1]
@@ -128,8 +124,8 @@
         if (speaker === 'customer') {
           const customerTranscript
             = transcript.filter(({ speaker }) => speaker === 'customer');
-          processSentiment(customerTranscript).then(newSentiment =>
-            sentiment = newSentiment
+          processSentiment(customerTranscript).then(sentimentDecimal =>
+            sentiment = sentimentDecimal * 100
           )
         }
       }
