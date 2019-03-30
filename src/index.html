@@ -1,9 +1,9 @@
-<main>
+<div class="container">
   <header>
-    T-Gist Live Transcription Portal
+    T - Gist Live Transcription
   </header>
   <Transcript />
-</main>
+</div>
 
 <style>
   header {
@@ -11,31 +11,27 @@
     top: 0;
     left: 0;
     width: 100%;
+    z-index: -1;
   }
-  main:before {
+  .container:before {
     content: '';
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(-45deg, #cd0a5e, #f279ab) no-repeat;
-    background-size: 150vw 135vh;
+    background: linear-gradient(-45deg, #cd0a5e, #e57bfa) no-repeat;
+    background-size: 200vw 160vh;
     background-position: top left;
-    animation: fluctuate 3s ease-in-out infinite;
+    animation: fluctuate 4s ease-in-out infinite;
     z-index: -1;
-  }
-  main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
   }
   @keyframes fluctuate {
     0% {
       background-position: 0 0;
     }
     50% {
-      background-position: -50vw -35vh;
+      background-position: -100vw -60vh;
     }
     100% {
       background-position: 0 0;

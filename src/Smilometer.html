@@ -1,1 +1,82 @@
-<div></div>
+<div class="meter">
+  <div
+    class="emoji"
+    style="border: 0.5rem solid {currEmoji.color}; --sentiment: {sentiment}"
+  >
+    <span>{currEmoji.icon}</span>
+  </div>
+</div>
+
+<style>
+  .meter {
+    position: relative;
+    height: 25rem;
+    width: 8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    box-shadow: var(--container-shadow);
+    padding: 3rem;
+    border-radius: 1rem;
+  }
+  .meter:before {
+    content: '';
+    position: relative;
+    height: 100%;
+    width: 1.5rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(#41ff50, #fff500, #ff3939);
+  }
+  .emoji {
+    --sentiment: 0;
+    content: '';
+    border-radius: 100%;
+    position: absolute;
+    bottom: calc(2rem + var(--sentiment) / 6 * 1rem);
+    height: 4rem;
+    box-shadow: 0 0 1rem var(--grey-5);
+    transition: all 0.5s;
+    transform: scale(calc(1 + var(--sentiment) / 200));
+  }
+  .emoji > span {
+    vertical-align: middle;
+    line-height: 1;
+    font-size: 3.4rem;
+    margin: -0.2rem;
+  }
+</style>
+
+<script>
+  import { beforeUpdate } from 'svelte'
+
+  const emojis = [
+    {
+      icon: '😠',
+      color: '#FF3939',
+    },
+    {
+      icon: '🙁',
+      color: '#FFA219',
+    },
+    {
+      icon: '😐',
+      color: '#FFF500',
+    },
+    {
+      icon: '🙂',
+      color: '#B3F81F',
+    },
+    {
+      icon: '😃',
+      color: '#41FF50',
+    },
+  ]
+  let currEmoji = emojis[0]
+  export let sentiment = 100
+
+  beforeUpdate(() => {
+    const index = Math.floor(sentiment / 20)
+    currEmoji = emojis[index] ? emojis[index] : emojis[4]
+  })
+</script>

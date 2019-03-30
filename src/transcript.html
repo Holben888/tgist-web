@@ -1,18 +1,120 @@
-<section>
-  words!
-</section>
+<main>
+  <section>
+    {#each transcript as entry}
+    <div class="entry-container">
+      <p class="label">{capitalize(entry.speaker)}</p>
+      <p>
+        <span>{entry.recognized}</span>
+        <span class="recognizing">{entry.recognizing}</span>
+      </p>
+    </div>
+    {/each}
+  </section>
+  <div class="smilometer-container">
+    <Smilometer sentiment="{sentiment}" />
+  </div>
+</main>
 
 <style>
+  main {
+    display: flex;
+    flex-direction: column;
+    margin-left: 5%;
+  }
+  .smilometer-container {
+    position: fixed;
+    right: 5%;
+    top: 15rem;
+  }
   section {
     border-radius: 1rem;
     background: white;
-    box-shadow: 0 3px 20px rgba(110, 29, 106, 0.63);
+    box-shadow: var(--container-shadow);
     padding: 2rem;
     min-height: 100vh;
     font-family: open-sans;
     color: var(--grey-1);
-    width: 80%;
+    width: 83%;
     font-family: open-sans, sans-serif;
     margin-top: 10rem;
   }
+  .entry-container {
+    display: flex;
+  }
+  .label {
+    min-width: 8rem;
+    text-align: right;
+    font-weight: 600;
+    padding-right: 1rem;
+  }
+  p > .recognizing {
+    color: var(--grey-5);
+  }
 </style>
+
+<script>
+  import { onMount, beforeUpdate } from 'svelte'
+  import Smilometer from './Smilometer.html'
+
+  let transcript = []
+  let sentiment = 0
+
+  const capitalize = word =>
+    word && word.length ? word[0].toUpperCase() + word.slice(1) : ''
+
+  const lastLogs = {}
+
+  beforeUpdate(() => {
+    console.log(transcript)
+  })
+
+  onMount(() => {
+    const socket = new WebSocket(
+      'wss://tgist-server-tawzkzwulm.now.sh/ws/speech/recv'
+    )
+
+    setInterval(() => {
+      sentiment = Math.random() * 100
+      console.log(sentiment)
+    }, 2000)
+
+    socket.onmessage = event => {
+      const { speaker, type, result } = JSON.parse(event.data)
+      const lastEntry = transcript.length
+        ? transcript[transcript.length - 1]
+        : {}
+      if (lastEntry.speaker === speaker) {
+        lastLogs[speaker] = lastEntry
+      }
+
+      if (!lastLogs[speaker]) {
+        if (type === 'recognized') {
+          lastLogs[speaker] = {
+            speaker: speaker,
+            recognized: result,
+            recognizing: '',
+          }
+        } else {
+          lastLogs[speaker] = {
+            speaker: speaker,
+            recognized: '',
+            recognizing: result,
+          }
+        }
+        transcript.push(lastLogs[speaker])
+      } else {
+        if (type === 'recognized') {
+          lastLogs[speaker].recognized += ' ' + result
+          lastLogs[speaker].recognizing = ''
+        } else {
+          lastLogs[speaker].recognizing = result
+        }
+      }
+
+      if (type === 'recognized') {
+        lastLogs[speaker] = undefined
+      }
+      transcript = [...transcript]
+    }
+  })
+</script>
