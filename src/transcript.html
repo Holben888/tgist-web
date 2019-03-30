@@ -10,7 +10,7 @@
     <button class="toggle {transcript.viewAll ? 'selected' : ''}" on:click="{() => toggleTranscriptView(true, index)}">View all</button>
     {/if}
     {#each transcript.transcriptBlocks as entry}
-    <div class="entry-container">
+    <div class="entry-container {!transcript.viewAll && !entry.important ? 'hidden' : ''} {!entry.important ? 'dim' : ''}">
       <p class="label">{capitalize(entry.speaker)}</p>
       <p>
         <span>{entry.recognized}</span>
@@ -58,6 +58,12 @@
   .entry-container {
     display: flex;
   }
+  .entry-container.dim {
+    color: red;
+  }
+  .collapsed .entry-container, .entry-container.hidden {
+    display: none;
+  }
   .label {
     min-width: 8rem;
     text-align: right;
@@ -98,20 +104,24 @@
     background: #d8357b;
     color: white;
   }
+  .collapsed .toggle {
+    display: none;
+  }
 </style>
 
 <script>
   import { onMount, beforeUpdate } from 'svelte'
   import Smilometer from './Smilometer.html'
-  import processAnalytics from './analytics';
+  import { processBestSentences, processSentiment } from './analytics';
 
-  let transcripts = [{transcriptBlocks: [], collapsed: true, viewAll: false}, {transcriptBlocks: [], collapsed: false, viewAll: false}]
-  let sentiment = 0
+  let transcripts = [{transcriptBlocks: []}]
+  // let transcripts = [{transcriptBlocks: [], collapsed: true, viewAll: false}, {transcriptBlocks: [], collapsed: false, viewAll: false}]
+  let sentiment = 50
 
   const capitalize = word =>
     word && word.length ? word[0].toUpperCase() + word.slice(1) : ''
 
-  const lastLogs = {}
+  let lastLogs = {}
 
   const expandTranscript = index => transcripts[index].collapsed = !transcripts[index].collapsed
 
@@ -119,15 +129,14 @@
 
   onMount(() => {
     const socket = new WebSocket(
-      'wss://tgist-server-tawzkzwulm.now.sh/ws/speech/recv'
+      'wss://tgist-server-qhacrrmzoy.now.sh/ws/speech/recv'
     )
 
-    setInterval(() => {
-      sentiment = Math.random() * 100
-    }, 2000)
-
     socket.onmessage = event => {
-      const transcript = transcripts[transcripts.length - 1]
+      const transcript = transcripts[transcripts.length - 1].transcriptBlocks
+      transcripts[transcripts.length - 1].collapsed = true
+      transcripts[transcripts.length - 1].viewAll = false
+
       const { speaker, type, result } = JSON.parse(event.data)
       const lastEntry = transcript.length
         ? transcript[transcript.length - 1]
@@ -135,6 +144,17 @@
 
       if (lastEntry.speaker === speaker) {
         lastLogs[speaker] = lastEntry
+      }
+
+      if (type === 'newTranscript') {
+        if (lastLogs['agent']){
+          lastLogs['agent'].recognizing = ''
+        }
+        if (lastLogs['customer']) {
+          lastLogs['customer'].recognizing = ''
+        }
+        transcripts = [...transcripts, {transcriptBlocks: []}]
+        lastLogs = {}
       }
 
       if (!lastLogs[speaker]) {
@@ -165,8 +185,17 @@
 
       if (type === 'recognized') {
         lastLogs[speaker] = undefined
-        processAnalytics(transcript);
+        processBestSentences(transcript)
+
+        if (speaker === 'customer') {
+          const customerTranscript
+            = transcript.filter(({ speaker }) => speaker === 'customer');
+          processSentiment(customerTranscript).then(sentimentDecimal =>
+            sentiment = sentimentDecimal * 100
+          )
+        }
       }
+
       transcript = [...transcript]
     }
   })
