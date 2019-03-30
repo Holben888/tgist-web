@@ -1,10 +1,15 @@
 <main>
   {#each transcripts as transcript, index}
   <section class="{transcript.collapsed ? 'collapsed' : ''}">
-    {#each transcript as entry}
     {#if index < transcripts.length - 1}
-      <p></p>
+    <div class="header">
+      <p>Transcript {index + 1}</p>
+      <button class="close" on:click="{() => expandTranscript(index)}"></button>
+    </div>
+    <button class="toggle {transcript.viewAll ? '' : 'selected'}" on:click="{() => toggleTranscriptView(false, index)}">Highlights</button>
+    <button class="toggle {transcript.viewAll ? 'selected' : ''}" on:click="{() => toggleTranscriptView(true, index)}">View all</button>
     {/if}
+    {#each transcript.transcriptBlocks as entry}
     <div class="entry-container">
       <p class="label">{capitalize(entry.speaker)}</p>
       <p>
@@ -25,6 +30,7 @@
     display: flex;
     flex-direction: column;
     margin-left: 5%;
+    padding-top: 7rem;
   }
   .smilometer-container {
     position: fixed;
@@ -41,11 +47,12 @@
     color: var(--grey-1);
     width: 83%;
     font-family: open-sans, sans-serif;
-    margin-top: 10rem;
+    margin-top: 5rem;
+    transition: min-height 0.5s;
   }
   section.collapsed {
     overflow: hidden;
-    height: 4rem;
+    height: 10rem;
     min-height: 0;
   }
   .entry-container {
@@ -60,19 +67,54 @@
   p > .recognizing {
     color: var(--grey-5);
   }
+  section .header {
+    display: flex;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--grey-1);
+  }
+  section button {
+    border: none;
+    background: white;
+    color: var(--grey-1);
+    font-family: open-sans;
+  }
+  section .header > button {
+    background: url('/icons/arrow-down.svg') no-repeat;
+    background-position: center;
+    background-size: 3rem;
+    width: 3rem;
+    margin-left: auto;
+  }
+  .toggle {
+    padding: 0.5rem 1rem;
+    font-size: 1.5rem;
+    box-shadow: 0 0 1rem var(--grey-5);
+    margin-right: 0.5rem;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+  }
+  .toggle.selected {
+    background: #d8357b;
+    color: white;
+  }
 </style>
 
 <script>
   import { onMount, beforeUpdate } from 'svelte'
   import Smilometer from './Smilometer.html'
 
-  let transcripts = [[], []]
+  let transcripts = [{transcriptBlocks: [], collapsed: true, viewAll: false}, {transcriptBlocks: [], collapsed: false, viewAll: false}]
   let sentiment = 0
 
   const capitalize = word =>
     word && word.length ? word[0].toUpperCase() + word.slice(1) : ''
 
   const lastLogs = {}
+
+  const expandTranscript = index => transcripts[index].collapsed = !transcripts[index].collapsed
+
+  const toggleTranscriptView = (viewAll, index) => transcripts[index].viewAll = viewAll
 
   onMount(() => {
     const socket = new WebSocket(
