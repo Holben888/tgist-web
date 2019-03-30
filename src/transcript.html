@@ -65,7 +65,7 @@
 <script>
   import { onMount, beforeUpdate } from 'svelte'
   import Smilometer from './Smilometer.html'
-  import processAnalytics from './analytics';
+  import { processBestSentences, processSentiment } from './analytics';
 
   let transcripts = [[], []]
   let sentiment = 0
@@ -123,8 +123,17 @@
 
       if (type === 'recognized') {
         lastLogs[speaker] = undefined
-        processAnalytics(transcript);
+        processBestSentences(transcript)
+
+        if (speaker === 'customer') {
+          const customerTranscript
+            = transcript.filter(({ speaker }) => speaker === 'customer');
+          processSentiment(customerTranscript).then(newSentiment =>
+            sentiment = newSentiment
+          )
+        }
       }
+
       transcript = [...transcript]
     }
   })

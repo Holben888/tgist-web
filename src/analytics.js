@@ -1,5 +1,6 @@
 const ANALYTICS_AUTHORIZATION_ENDPOINT = '/api/analyticskey';
 const ANALYTICS_KEY_PHRASES_ENDPOINT = 'https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/keyPhrases';
+const ANALYTICS_SENTIMENT_ENDPOINT = 'https://eastus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment';
 
 // ranking factors
 const KEY_PHRASE_WEIGHT = 18;
@@ -11,9 +12,12 @@ const LENGTH_WEIGHT = 0.05;
 const K_SCORE_THRESHOLD = 0.35;
 const MIN_ITEMS = 5;
 
+// increase to make sentiment more volatile
+const SENTIMENT_CHANGE_RATE = 0.2;
+
 const analyticsKey = fetch(ANALYTICS_AUTHORIZATION_ENDPOINT).then(req => req.text());
 
-function processAnalytics(transcript) {
+function processBestSentences(transcript) {
   const taggedTranscript = transcript
     .map((item, index) => ({ ...item, index }))
     .filter(({ recognized }) => recognized);
@@ -41,6 +45,35 @@ function processAnalytics(transcript) {
     taggedTranscript.forEach((_, i) => {
       transcript[i].important = sentenceIdxs.has(i);
     });
+  });
+}
+
+function processSentiment(customerTranscript) {
+  return analyticsKey.then(key => fetch(ANALYTICS_SENTIMENT_ENDPOINT, {
+    method: 'POST',
+    headers: new Headers({
+      'Content-Type': 'application/json',
+      'Ocp-Apim-Subscription-Key': key,
+    }),
+    body: JSON.stringify({
+      documents: [{
+        language: 'en',
+        id: '1',
+        text: customerTranscript[customerTranscript.length - 1],
+      }],
+    }),
+  })).then(req => req.json()).then(res => {
+    const currSentiment = res.documents[0].score;
+    if (customerTranscript.length > 1) {
+      const prevSentiment = customerTranscript[customerTranscript.length - 2]
+        .sentiment;
+      customerTranscript[customerTranscript.length - 1].sentiment
+        = SENTIMENT_CHANGE_RATE * currSentiment
+          + (1 - SENTIMENT_CHANGE_RATE) * prevSentiment;
+    } else {
+      customerTranscript[0].sentiment = currSentiment;
+    }
+    return customerTranscript[customerTranscript.length - 1].sentiment;
   });
 }
 
@@ -83,4 +116,4 @@ function getNBestSentences(sentenceMap, transcript) {
   return filtered;
 }
 
-export default processAnalytics;
+export { processBestSentences, processSentiment };
