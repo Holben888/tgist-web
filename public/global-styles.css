@@ -1,0 +1,37 @@
+@import url('https://use.typekit.net/zah2tdf.css');
+
+@font-face {
+  font-family: 'Grotesk';
+  src: url('/fonts/grotesk.ttf');
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  font-family: open-sans, sans-serif;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  background: none;
+  border: none;
+}
+
+header {
+  font-family: Grotesk;
+  font-size: 3rem;
+  color: white;
+  text-align: center;
+  padding: 3rem;
+}
+
+:root {
+  --grey-1: hsl(0, 0%, 10%);
+}

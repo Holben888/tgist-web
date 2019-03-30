@@ -1,0 +1,48 @@
+<main>
+  <header>
+    T-Gist Live Transcription Portal
+  </header>
+  <Transcript />
+</main>
+
+<style>
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  main:before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(-45deg, #cd0a5e, #f279ab) no-repeat;
+    background-size: 150vw 135vh;
+    background-position: top left;
+    animation: fluctuate 3s ease-in-out infinite;
+    z-index: -1;
+  }
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  @keyframes fluctuate {
+    0% {
+      background-position: 0 0;
+    }
+    50% {
+      background-position: -50vw -35vh;
+    }
+    100% {
+      background-position: 0 0;
+    }
+  }
+</style>
+
+<script>
+  import Transcript from './transcript.html'
+</script>
