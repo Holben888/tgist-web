@@ -65,6 +65,7 @@
 <script>
   import { onMount, beforeUpdate } from 'svelte'
   import Smilometer from './Smilometer.html'
+  import processAnalytics from './analytics';
 
   let transcripts = [[], []]
   let sentiment = 0
@@ -85,7 +86,7 @@
 
     socket.onmessage = event => {
       const transcript = transcripts[transcripts.length - 1]
-      const { speaker, type, result, unimportant } = JSON.parse(event.data)
+      const { speaker, type, result } = JSON.parse(event.data)
       const lastEntry = transcript.length
         ? transcript[transcript.length - 1]
         : {}
@@ -100,14 +101,14 @@
             speaker: speaker,
             recognized: result,
             recognizing: '',
-            unimportant: unimportant,
+            important: true,
           }
         } else {
           lastLogs[speaker] = {
             speaker: speaker,
             recognized: '',
             recognizing: result,
-            unimportant: unimportant,
+            important: true,
           }
         }
         transcript.push(lastLogs[speaker])
@@ -122,6 +123,7 @@
 
       if (type === 'recognized') {
         lastLogs[speaker] = undefined
+        processAnalytics(transcript);
       }
       transcript = [...transcript]
     }
