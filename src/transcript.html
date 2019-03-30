@@ -1,6 +1,10 @@
 <main>
-  <section>
+  {#each transcripts as transcript, index}
+  <section class="{transcript.collapsed ? 'collapsed' : ''}">
     {#each transcript as entry}
+    {#if index < transcripts.length - 1}
+      <p></p>
+    {/if}
     <div class="entry-container">
       <p class="label">{capitalize(entry.speaker)}</p>
       <p>
@@ -10,6 +14,7 @@
     </div>
     {/each}
   </section>
+  {/each}
   <div class="smilometer-container">
     <Smilometer sentiment="{sentiment}" />
   </div>
@@ -38,6 +43,11 @@
     font-family: open-sans, sans-serif;
     margin-top: 10rem;
   }
+  section.collapsed {
+    overflow: hidden;
+    height: 4rem;
+    min-height: 0;
+  }
   .entry-container {
     display: flex;
   }
@@ -56,17 +66,13 @@
   import { onMount, beforeUpdate } from 'svelte'
   import Smilometer from './Smilometer.html'
 
-  let transcript = []
+  let transcripts = [[], []]
   let sentiment = 0
 
   const capitalize = word =>
     word && word.length ? word[0].toUpperCase() + word.slice(1) : ''
 
   const lastLogs = {}
-
-  beforeUpdate(() => {
-    console.log(transcript)
-  })
 
   onMount(() => {
     const socket = new WebSocket(
@@ -75,14 +81,15 @@
 
     setInterval(() => {
       sentiment = Math.random() * 100
-      console.log(sentiment)
     }, 2000)
 
     socket.onmessage = event => {
-      const { speaker, type, result } = JSON.parse(event.data)
+      const transcript = transcripts[transcripts.length - 1]
+      const { speaker, type, result, unimportant } = JSON.parse(event.data)
       const lastEntry = transcript.length
         ? transcript[transcript.length - 1]
         : {}
+
       if (lastEntry.speaker === speaker) {
         lastLogs[speaker] = lastEntry
       }
@@ -93,12 +100,14 @@
             speaker: speaker,
             recognized: result,
             recognizing: '',
+            unimportant: unimportant,
           }
         } else {
           lastLogs[speaker] = {
             speaker: speaker,
             recognized: '',
             recognizing: result,
+            unimportant: unimportant,
           }
         }
         transcript.push(lastLogs[speaker])
