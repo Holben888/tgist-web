@@ -74,7 +74,7 @@ function processSentiment(customerTranscript) {
             {
               language: 'en',
               id: '1',
-              text: customerTranscript[customerTranscript.length - 1],
+              text: customerTranscript[customerTranscript.length - 1].recognized,
             },
           ],
         }),
@@ -106,7 +106,7 @@ function getSentenceRanks(transcript, keyPhrases) {
     weight: KEY_PHRASE_WEIGHT * Math.pow(1 - i / keyPhrases.length, 3),
   }))
 
-  sentencesDict = new Map()
+  const sentencesDict = new Map()
   transcript.forEach(({ recognized, index }) => {
     let score = 0
     keyPhrases.forEach(({ regex, weight }) => {
